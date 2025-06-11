@@ -9,13 +9,18 @@ Isar? isar;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final dir = await getApplicationDocumentsDirectory();
-  isar = await Isar.open(schemas: [TaskSchema], directory: dir.path);
+  isar = Isar.open(schemas: [TaskSchema], directory: dir.path);
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -49,7 +54,10 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    // 🔄 Reactive Data: subscribe to all tasks
+    _initIsar();
+  }
+
+  void _initIsar() async {
     _taskStream = isar!.tasks.where().watch().asyncMap((_) async {
       return isar!.tasks.where().findAll();
     });
@@ -70,6 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _addTask() async {
     final task = Task()
+      ..category = (Category()..value = 'category-${_titleController.text}')
       ..title = _titleController.text
       ..description = _descController.text;
     await isar!.writeAsync((isar) {
@@ -96,8 +105,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _updateTaskV2(Task task) async {
     task.description = "[Updated] ${task.description ?? ''}";
     await isar!.writeAsync((isar) {
-      isar.tasks.update.call(title: task.title, description: task.description);
-      isar.tasks.where().titleEqualTo(task.title).updateAll(description: task.description);
+      // isar.tasks.update.call(title: task.title, description: task.description);
+      // isar.tasks.update.call(title: task.title, category: (Category()..value = 'category-${DateTime.now().millisecondsSinceEpoch}'));
+      // isar.tasks.where().titleEqualTo(task.title).updateAll(description: task.description);
     });
   }
 
@@ -232,7 +242,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       final task = tasks[index];
                       return ListTile(
                         title: Text(task.title),
-                        subtitle: Text(task.description ?? ''),
+                        subtitle: Text('${task.description ?? ''} - category: ${task.category?.value}'),
                         trailing: IconButton(
                           icon: const Icon(Icons.edit),
                           onPressed: () => _updateTask(task),

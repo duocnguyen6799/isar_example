@@ -30,12 +30,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # isar: ^4.0.0-dev.14
-  # isar_flutter_libs: ^4.0.0-dev.14
-  isar:
-    path: ./packages/isar
-  isar_flutter_libs:
-    path: ./packages/isar_flutter_libs
+  isar: ^4.0.0-dev.14
+  isar_flutter_libs: ^4.0.0-dev.14
+  # isar:
+  #   path: ./packages/isar
+  # isar_flutter_libs:
+  #   path: ./packages/isar_flutter_libs
   path_provider: ^2.0.15
   build_runner: ^2.4.6 # For code generation
 
@@ -44,10 +44,10 @@ dependencies:
   cupertino_icons: ^1.0.8
 
 dependency_overrides:
-  isar:
-    path: ./packages/isar
-  isar_flutter_libs:
-    path: ./packages/isar_flutter_libs
+  # isar:
+  #   path: ./packages/isar
+  # isar_flutter_libs:
+  #   path: ./packages/isar_flutter_libs
   flutter_test:
     sdk: flutter
   meta: 1.15.0

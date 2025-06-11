@@ -32,6 +32,16 @@ const TaskSchema = IsarGeneratedSchema(
         name: 'isDone',
         type: IsarType.bool,
       ),
+      IsarPropertySchema(
+        name: 'category',
+        type: IsarType.object,
+        target: 'Category',
+      ),
+      IsarPropertySchema(
+        name: 'taskTime',
+        type: IsarType.object,
+        target: 'TaskTime',
+      ),
     ],
     indexes: [],
   ),
@@ -40,7 +50,7 @@ const TaskSchema = IsarGeneratedSchema(
     deserialize: deserializeTask,
     deserializeProperty: deserializeTaskProp,
   ),
-  embeddedSchemas: [],
+  embeddedSchemas: [CategorySchema, TaskTimeSchema],
 );
 
 @isarProtected
@@ -55,6 +65,26 @@ int serializeTask(IsarWriter writer, Task object) {
     }
   }
   IsarCore.writeBool(writer, 3, object.isDone);
+  {
+    final value = object.category;
+    if (value == null) {
+      IsarCore.writeNull(writer, 4);
+    } else {
+      final objectWriter = IsarCore.beginObject(writer, 4);
+      serializeCategory(objectWriter, value);
+      IsarCore.endObject(writer, objectWriter);
+    }
+  }
+  {
+    final value = object.taskTime;
+    if (value == null) {
+      IsarCore.writeNull(writer, 5);
+    } else {
+      final objectWriter = IsarCore.beginObject(writer, 5);
+      serializeTaskTime(objectWriter, value);
+      IsarCore.endObject(writer, objectWriter);
+    }
+  }
   return Isar.fastHash(object.title);
 }
 
@@ -64,6 +94,26 @@ Task deserializeTask(IsarReader reader) {
   object.title = IsarCore.readString(reader, 1) ?? '';
   object.description = IsarCore.readString(reader, 2);
   object.isDone = IsarCore.readBool(reader, 3);
+  {
+    final objectReader = IsarCore.readObject(reader, 4);
+    if (objectReader.isNull) {
+      object.category = null;
+    } else {
+      final embedded = deserializeCategory(objectReader);
+      IsarCore.freeReader(objectReader);
+      object.category = embedded;
+    }
+  }
+  {
+    final objectReader = IsarCore.readObject(reader, 5);
+    if (objectReader.isNull) {
+      object.taskTime = null;
+    } else {
+      final embedded = deserializeTaskTime(objectReader);
+      IsarCore.freeReader(objectReader);
+      object.taskTime = embedded;
+    }
+  }
   return object;
 }
 
@@ -76,6 +126,28 @@ dynamic deserializeTaskProp(IsarReader reader, int property) {
       return IsarCore.readString(reader, 2);
     case 3:
       return IsarCore.readBool(reader, 3);
+    case 4:
+      {
+        final objectReader = IsarCore.readObject(reader, 4);
+        if (objectReader.isNull) {
+          return null;
+        } else {
+          final embedded = deserializeCategory(objectReader);
+          IsarCore.freeReader(objectReader);
+          return embedded;
+        }
+      }
+    case 5:
+      {
+        final objectReader = IsarCore.readObject(reader, 5);
+        if (objectReader.isNull) {
+          return null;
+        } else {
+          final embedded = deserializeTaskTime(objectReader);
+          IsarCore.freeReader(objectReader);
+          return embedded;
+        }
+      }
     default:
       throw ArgumentError('Unknown property: $property');
   }
@@ -571,9 +643,47 @@ extension TaskQueryFilter on QueryBuilder<Task, Task, QFilterCondition> {
       );
     });
   }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> categoryIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 4));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> categoryIsNotNull() {
+    return QueryBuilder.apply(not(), (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 4));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> taskTimeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 5));
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> taskTimeIsNotNull() {
+    return QueryBuilder.apply(not(), (query) {
+      return query.addFilterCondition(const IsNullCondition(property: 5));
+    });
+  }
 }
 
-extension TaskQueryObject on QueryBuilder<Task, Task, QFilterCondition> {}
+extension TaskQueryObject on QueryBuilder<Task, Task, QFilterCondition> {
+  QueryBuilder<Task, Task, QAfterFilterCondition> category(
+      FilterQuery<Category> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, 4);
+    });
+  }
+
+  QueryBuilder<Task, Task, QAfterFilterCondition> taskTime(
+      FilterQuery<TaskTime> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, 5);
+    });
+  }
+}
 
 extension TaskQuerySortBy on QueryBuilder<Task, Task, QSortBy> {
   QueryBuilder<Task, Task, QAfterSortBy> sortByTitle(
@@ -706,6 +816,18 @@ extension TaskQueryProperty1 on QueryBuilder<Task, Task, QProperty> {
       return query.addProperty(3);
     });
   }
+
+  QueryBuilder<Task, Category?, QAfterProperty> categoryProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(4);
+    });
+  }
+
+  QueryBuilder<Task, TaskTime?, QAfterProperty> taskTimeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(5);
+    });
+  }
 }
 
 extension TaskQueryProperty2<R> on QueryBuilder<Task, R, QAfterProperty> {
@@ -724,6 +846,18 @@ extension TaskQueryProperty2<R> on QueryBuilder<Task, R, QAfterProperty> {
   QueryBuilder<Task, (R, bool), QAfterProperty> isDoneProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addProperty(3);
+    });
+  }
+
+  QueryBuilder<Task, (R, Category?), QAfterProperty> categoryProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(4);
+    });
+  }
+
+  QueryBuilder<Task, (R, TaskTime?), QAfterProperty> taskTimeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(5);
     });
   }
 }
@@ -747,4 +881,534 @@ extension TaskQueryProperty3<R1, R2>
       return query.addProperty(3);
     });
   }
+
+  QueryBuilder<Task, (R1, R2, Category?), QOperations> categoryProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(4);
+    });
+  }
+
+  QueryBuilder<Task, (R1, R2, TaskTime?), QOperations> taskTimeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addProperty(5);
+    });
+  }
 }
+
+// **************************************************************************
+// _IsarEmbeddedGenerator
+// **************************************************************************
+
+// coverage:ignore-file
+// ignore_for_file: duplicate_ignore, invalid_use_of_protected_member, lines_longer_than_80_chars, constant_identifier_names, avoid_js_rounded_ints, no_leading_underscores_for_local_identifiers, require_trailing_commas, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_in_if_null_operators, library_private_types_in_public_api, prefer_const_constructors
+// ignore_for_file: type=lint
+
+const CategorySchema = IsarGeneratedSchema(
+  schema: IsarSchema(
+    name: 'Category',
+    embedded: true,
+    properties: [
+      IsarPropertySchema(
+        name: 'value',
+        type: IsarType.string,
+      ),
+    ],
+    indexes: [],
+  ),
+  converter: IsarObjectConverter<void, Category>(
+    serialize: serializeCategory,
+    deserialize: deserializeCategory,
+  ),
+);
+
+@isarProtected
+int serializeCategory(IsarWriter writer, Category object) {
+  IsarCore.writeString(writer, 1, object.value);
+  return 0;
+}
+
+@isarProtected
+Category deserializeCategory(IsarReader reader) {
+  final object = Category();
+  object.value = IsarCore.readString(reader, 1) ?? '';
+  return object;
+}
+
+extension CategoryQueryFilter
+    on QueryBuilder<Category, Category, QFilterCondition> {
+  QueryBuilder<Category, Category, QAfterFilterCondition> valueEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 1,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> valueGreaterThan(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 1,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      valueGreaterThanOrEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 1,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> valueLessThan(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 1,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      valueLessThanOrEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 1,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> valueBetween(
+    String lower,
+    String upper, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 1,
+          lower: lower,
+          upper: upper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> valueStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        StartsWithCondition(
+          property: 1,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> valueEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EndsWithCondition(
+          property: 1,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> valueContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        ContainsCondition(
+          property: 1,
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> valueMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        MatchesCondition(
+          property: 1,
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> valueIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const EqualCondition(
+          property: 1,
+          value: '',
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> valueIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const GreaterCondition(
+          property: 1,
+          value: '',
+        ),
+      );
+    });
+  }
+}
+
+extension CategoryQueryObject
+    on QueryBuilder<Category, Category, QFilterCondition> {}
+
+// coverage:ignore-file
+// ignore_for_file: duplicate_ignore, invalid_use_of_protected_member, lines_longer_than_80_chars, constant_identifier_names, avoid_js_rounded_ints, no_leading_underscores_for_local_identifiers, require_trailing_commas, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_in_if_null_operators, library_private_types_in_public_api, prefer_const_constructors
+// ignore_for_file: type=lint
+
+const TaskTimeSchema = IsarGeneratedSchema(
+  schema: IsarSchema(
+    name: 'TaskTime',
+    embedded: true,
+    properties: [
+      IsarPropertySchema(
+        name: 'createdAt',
+        type: IsarType.long,
+      ),
+      IsarPropertySchema(
+        name: 'startTime',
+        type: IsarType.long,
+      ),
+      IsarPropertySchema(
+        name: 'endTime',
+        type: IsarType.long,
+      ),
+    ],
+    indexes: [],
+  ),
+  converter: IsarObjectConverter<void, TaskTime>(
+    serialize: serializeTaskTime,
+    deserialize: deserializeTaskTime,
+  ),
+);
+
+@isarProtected
+int serializeTaskTime(IsarWriter writer, TaskTime object) {
+  IsarCore.writeLong(writer, 1, object.createdAt);
+  IsarCore.writeLong(writer, 2, object.startTime);
+  IsarCore.writeLong(writer, 3, object.endTime);
+  return 0;
+}
+
+@isarProtected
+TaskTime deserializeTaskTime(IsarReader reader) {
+  final object = TaskTime();
+  object.createdAt = IsarCore.readLong(reader, 1);
+  object.startTime = IsarCore.readLong(reader, 2);
+  object.endTime = IsarCore.readLong(reader, 3);
+  return object;
+}
+
+extension TaskTimeQueryFilter
+    on QueryBuilder<TaskTime, TaskTime, QFilterCondition> {
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition> createdAtEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 1,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition> createdAtGreaterThan(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 1,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition>
+      createdAtGreaterThanOrEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 1,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition> createdAtLessThan(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 1,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition>
+      createdAtLessThanOrEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 1,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition> createdAtBetween(
+    int lower,
+    int upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 1,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition> startTimeEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 2,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition> startTimeGreaterThan(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 2,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition>
+      startTimeGreaterThanOrEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 2,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition> startTimeLessThan(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 2,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition>
+      startTimeLessThanOrEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 2,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition> startTimeBetween(
+    int lower,
+    int upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 2,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition> endTimeEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        EqualCondition(
+          property: 3,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition> endTimeGreaterThan(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterCondition(
+          property: 3,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition>
+      endTimeGreaterThanOrEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        GreaterOrEqualCondition(
+          property: 3,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition> endTimeLessThan(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessCondition(
+          property: 3,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition>
+      endTimeLessThanOrEqualTo(
+    int value,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        LessOrEqualCondition(
+          property: 3,
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<TaskTime, TaskTime, QAfterFilterCondition> endTimeBetween(
+    int lower,
+    int upper,
+  ) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        BetweenCondition(
+          property: 3,
+          lower: lower,
+          upper: upper,
+        ),
+      );
+    });
+  }
+}
+
+extension TaskTimeQueryObject
+    on QueryBuilder<TaskTime, TaskTime, QFilterCondition> {}
